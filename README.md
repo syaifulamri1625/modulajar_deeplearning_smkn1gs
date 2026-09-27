@@ -38,7 +38,7 @@ Platform AI Generator Modul Ajar Kurikulum Merdeka berbasis **Pembelajaran Menda
    - Ubah `None` menjadi **`main`** (atau `master`).
    - Folder biarkan tetap **`/ (root)`**.
 4. Klik tombol **Save**.
-5. Tunggu 1-2 menit. GitHub Pages akan memunculkan URL resmi HTTPS Anda (contoh: `[https://username-anda.github.io/modul-ajar-smkn1gs/](https://syaifulamri1625.github.io/modulajar_deeplearning_smkn1gs/)`).
+5. Tunggu 1-2 menit. GitHub Pages akan memunculkan URL resmi HTTPS Anda (contoh: `https://syaifulamri1625.github.io/modulajar_deeplearning_smkn1gs/`).
 
 ---
 
