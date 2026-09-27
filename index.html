@@ -1,0 +1,1067 @@
+<!DOCTYPE html>
+<html lang="id" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Modul Ajar Generator Pro - SMK Negeri 1 Gunung Sindur</title>
+    <meta name="theme-color" content="#172554">
+    <meta name="description" content="Aplikasi AI Modul Ajar Kurikulum Merdeka, Deep Learning, GBLHS & Gapura Panca Waluya SMK Negeri 1 Gunung Sindur">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="ModulAjarAI">
+    
+    <!-- Dynamic Manifest Link for PWA Installation -->
+    <link id="pwa-manifest" rel="manifest">
+    <link rel="apple-touch-icon" href="https://lh3.googleusercontent.com/d/18s27bJQ2ZE5lW__SUHjZV3VH0Yjk2ri0">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'Inter', 'sans-serif'],
+                        serif: ['Times New Roman', 'Times', 'Georgia', 'serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            500: '#2563eb',
+                            600: '#1d4ed8',
+                            700: '#1e40af',
+                            800: '#1e3a8a',
+                            900: '#172554',
+                        },
+                        accent: {
+                            red: '#dc2626'
+                        }
+                    }
+                }
+            }
+        };
+
+        function updateThemeUI(isDark) {
+            const themeText = document.getElementById('theme-text');
+            const themeIcon = document.getElementById('theme-icon');
+            const themeIconMob = document.getElementById('theme-icon-mob');
+            
+            if (themeText) themeText.innerText = isDark ? 'Light Mode' : 'Dark Mode';
+            if (themeIcon) {
+                themeIcon.className = isDark ? 'fa-solid fa-sun text-yellow-300 mr-1.5' : 'fa-solid fa-moon text-yellow-300 mr-1.5';
+            }
+            if (themeIconMob) {
+                themeIconMob.className = isDark ? 'fa-solid fa-sun text-yellow-300' : 'fa-solid fa-moon text-yellow-300';
+            }
+        }
+
+        function toggleDarkMode() {
+            const isDark = document.documentElement.classList.toggle('dark');
+            try {
+                localStorage.setItem('smkn1gs_theme', isDark ? 'dark' : 'light');
+            } catch (e) {}
+            updateThemeUI(isDark);
+        }
+
+        function initTheme() {
+            try {
+                const savedTheme = localStorage.getItem('smkn1gs_theme');
+                const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
+                    document.documentElement.classList.add('dark');
+                    updateThemeUI(true);
+                } else {
+                    document.documentElement.classList.remove('dark');
+                    updateThemeUI(false);
+                }
+            } catch (e) {
+                updateThemeUI(false);
+            }
+        }
+
+        function getApiKey() {
+            try {
+                return localStorage.getItem('smkn1gs_gemini_key') || '';
+            } catch (e) {
+                return '';
+            }
+        }
+
+        function openApiKeyModal() {
+            const apiKeyInput = document.getElementById('custom-api-key');
+            const modal = document.getElementById('apiKeyModal');
+            if (apiKeyInput) apiKeyInput.value = getApiKey();
+            if (modal) modal.classList.remove('hidden');
+        }
+
+        function closeApiKeyModal() {
+            const modal = document.getElementById('apiKeyModal');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        function saveApiKey() {
+            const apiKeyInput = document.getElementById('custom-api-key');
+            if (apiKeyInput) {
+                const key = apiKeyInput.value.trim();
+                try {
+                    localStorage.setItem('smkn1gs_gemini_key', key);
+                } catch (e) {}
+                closeApiKeyModal();
+                alertMessage('API Key berhasil disimpan!');
+            }
+        }
+
+        function openGithubDeployModal() {
+            const modal = document.getElementById('githubDeployModal');
+            if (modal) modal.classList.remove('hidden');
+        }
+
+        function closeGithubDeployModal() {
+            const modal = document.getElementById('githubDeployModal');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        function alertMessage(msg) {
+            try {
+                const div = document.createElement('div');
+                div.className = 'fixed bottom-5 right-5 bg-slate-900 text-white px-4 py-3 rounded-xl shadow-xl z-50 text-xs font-medium flex items-center space-x-2 border border-slate-700 animate-bounce';
+                div.innerHTML = '<i class="fa-solid fa-circle-check text-blue-400"></i><span>' + msg + '</span>';
+                document.body.appendChild(div);
+                setTimeout(() => div.remove(), 3500);
+            } catch (e) {
+                console.log(msg);
+            }
+        }
+    </script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        @media print {
+            body * {
+                visibility: hidden !important;
+            }
+            #printable-area, #printable-area * {
+                visibility: visible !important;
+            }
+            #printable-area {
+                position: absolute !important;
+                left: 0 !important;
+                top: 0 !important;
+                width: 100% !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                background: white !important;
+                color: #000000 !important;
+                box-shadow: none !important;
+                border: none !important;
+                font-family: 'Times New Roman', Times, serif !important;
+            }
+            .no-print {
+                display: none !important;
+            }
+            @page {
+                size: A4 portrait;
+                margin: 1.5cm 1.5cm 1.5cm 1.5cm;
+            }
+            h2, h3, tr, blockquote, table {
+                break-inside: avoid;
+            }
+            h2, h3 {
+                break-after: avoid;
+            }
+        }
+
+        .gradient-header {
+            background: linear-gradient(135deg, #172554 0%, #1e3a8a 50%, #1d4ed8 100%);
+        }
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        .card-hover:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(29, 78, 216, 0.08), 0 8px 10px -6px rgba(29, 78, 216, 0.05);
+        }
+
+        /* Format Dokumen Resmi Sekolah (Times New Roman, Justify, Single Spacing) */
+        .modul-content {
+            color: #000000;
+            font-size: 11pt;
+            line-height: 1.0;
+            text-align: justify;
+            text-justify: inter-word;
+            font-family: 'Times New Roman', Times, serif;
+        }
+        .dark .modul-content {
+            color: #f1f5f9;
+        }
+        .modul-content h2 { 
+            font-size: 12pt; 
+            font-weight: bold; 
+            color: #000000; 
+            margin-top: 1.1rem; 
+            margin-bottom: 0.35rem; 
+            border-bottom: 1.5px solid #000000; 
+            padding-bottom: 0.15rem; 
+            text-transform: uppercase;
+            letter-spacing: 0.02em;
+            text-align: left;
+            font-family: 'Times New Roman', Times, serif;
+            break-after: avoid;
+        }
+        .dark .modul-content h2 {
+            color: #93c5fd;
+            border-bottom: 1.5px solid #3b82f6;
+        }
+        .modul-content h3 { 
+            font-size: 11pt; 
+            font-weight: bold; 
+            color: #000000; 
+            margin-top: 0.85rem; 
+            margin-bottom: 0.25rem; 
+            text-align: left;
+            font-family: 'Times New Roman', Times, serif;
+            break-after: avoid;
+        }
+        .dark .modul-content h3 {
+            color: #ffffff;
+        }
+        .modul-content p { 
+            font-size: 11pt;
+            line-height: 1.0;
+            margin-bottom: 0.35rem; 
+            color: #000000; 
+            text-align: justify; 
+            text-justify: inter-word;
+            font-family: 'Times New Roman', Times, serif;
+        }
+        .dark .modul-content p {
+            color: #e2e8f0;
+        }
+        .modul-content ul { 
+            list-style-type: disc; 
+            padding-left: 1.3rem; 
+            margin-bottom: 0.35rem; 
+            color: #000000; 
+            text-align: justify;
+            text-justify: inter-word;
+            font-family: 'Times New Roman', Times, serif;
+        }
+        .dark .modul-content ul {
+            color: #e2e8f0;
+        }
+        .modul-content ol { 
+            list-style-type: decimal; 
+            padding-left: 1.3rem; 
+            margin-bottom: 0.35rem; 
+            color: #000000; 
+            text-align: justify;
+            text-justify: inter-word;
+            font-family: 'Times New Roman', Times, serif;
+        }
+        .dark .modul-content ol {
+            color: #e2e8f0;
+        }
+        .modul-content li { 
+            font-size: 11pt;
+            line-height: 1.0;
+            margin-bottom: 0.2rem; 
+            text-align: justify;
+            text-justify: inter-word;
+            font-family: 'Times New Roman', Times, serif;
+        }
+        .modul-content table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            margin-top: 0.5rem; 
+            margin-bottom: 0.5rem; 
+            font-size: 10pt; 
+            line-height: 1.0;
+            background-color: white;
+            font-family: 'Times New Roman', Times, serif;
+            break-inside: avoid;
+        }
+        .dark .modul-content table {
+            background-color: #1e293b;
+        }
+        .modul-content th, .modul-content td { 
+            border: 1px solid #000000; 
+            padding: 0.35rem 0.5rem; 
+            text-align: justify; 
+            text-justify: inter-word;
+            line-height: 1.0;
+            vertical-align: top;
+        }
+        .dark .modul-content th, .dark .modul-content td {
+            border-color: #475569;
+        }
+        .modul-content th { 
+            background-color: #f1f5f9; 
+            font-weight: bold; 
+            color: #000000; 
+            text-align: center;
+        }
+        .dark .modul-content th {
+            background-color: #172554;
+            color: #ffffff;
+        }
+        .modul-content blockquote {
+            border-left: 3px solid #000000;
+            padding-left: 0.75rem;
+            margin-left: 0;
+            margin-right: 0;
+            font-style: italic;
+            color: #1e293b;
+            background-color: #f8fafc;
+            padding-top: 0.3rem;
+            padding-bottom: 0.3rem;
+            margin-bottom: 0.4rem;
+            text-align: justify;
+            font-family: 'Times New Roman', Times, serif;
+        }
+        .dark .modul-content blockquote {
+            color: #cbd5e1;
+            background-color: #1e293b;
+            border-left-color: #3b82f6;
+        }
+
+        .a4-preview-container {
+            width: 100%;
+            max-width: 210mm;
+            min-height: 297mm;
+            margin: 0 auto;
+            background: white;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+            padding: 1.8cm 1.8cm;
+        }
+        .dark .a4-preview-container {
+            background: #0f172a;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(0,0,0,0.03);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(29, 78, 216, 0.2);
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(29, 78, 216, 0.4);
+        }
+    </style>
+</head>
+<body class="bg-slate-100 dark:bg-slate-950 text-slate-800 dark:text-slate-100 h-full font-sans antialiased flex flex-col min-h-screen transition-colors duration-300">
+
+    <header class="gradient-header text-white shadow-xl sticky top-0 z-50 no-print border-b border-blue-900/50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+            <div class="flex items-center space-x-3.5">
+                <div class="bg-white p-1.5 rounded-2xl shadow-lg border border-blue-200 flex items-center justify-center w-12 h-12">
+                    <img src="https://lh3.googleusercontent.com/d/18s27bJQ2ZE5lW__SUHjZV3VH0Yjk2ri0" alt="Logo SMK Negeri 1 Gunung Sindur" class="w-9 h-9 object-contain" onerror="this.src='https://placehold.co/100x100/1e3a8a/ffffff?text=SMKN1GS'">
+                </div>
+                <div>
+                    <h1 class="font-extrabold text-sm sm:text-base tracking-tight leading-tight flex items-center gap-2">
+                        SMK NEGERI 1 GUNUNG SINDUR
+                        <span class="bg-accent-red text-white text-[10px] px-2.5 py-0.5 rounded-full uppercase font-bold tracking-wider hidden sm:inline-block shadow-sm">Modul Ajar Pro</span>
+                    </h1>
+                    <p class="text-xs text-blue-200 font-medium">Platform AI Generator Kurikulum Merdeka, Deep Learning & Panca Waluya</p>
+                </div>
+            </div>
+
+            <!-- Desktop Header Buttons -->
+            <div class="hidden md:flex items-center space-x-2.5">
+                <!-- Tombol Install PWA Desktop -->
+                <button id="pwa-install-btn" onclick="installPWA()" class="bg-emerald-500 hover:bg-emerald-600 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center shadow-lg border border-emerald-400/50 animate-pulse hidden">
+                    <i class="fa-solid fa-laptop-medical mr-1.5 text-white"></i> Install di Laptop
+                </button>
+                <button onclick="openGithubDeployModal()" class="bg-white/10 hover:bg-white/20 text-white px-3 py-2 rounded-xl text-xs font-semibold transition border border-white/20 flex items-center shadow-sm" title="Panduan GitHub">
+                    <i class="fa-brands fa-github mr-1.5 text-blue-300"></i> Deploy GitHub
+                </button>
+                <button onclick="toggleDarkMode()" class="bg-white/10 hover:bg-white/20 text-white px-3 py-2 rounded-xl text-xs font-semibold transition border border-white/20 flex items-center shadow-sm" title="Ubah Tema">
+                    <i id="theme-icon" class="fa-solid fa-moon text-yellow-300 mr-1.5"></i> <span id="theme-text">Dark Mode</span>
+                </button>
+                <button onclick="openApiKeyModal()" class="bg-white/10 hover:bg-white/20 text-white px-3.5 py-2 rounded-xl text-xs font-semibold transition border border-white/20 flex items-center shadow-sm">
+                    <i class="fa-solid fa-key text-yellow-300 mr-1.5"></i> API Key
+                </button>
+            </div>
+
+            <!-- Mobile Header Buttons -->
+            <div class="md:hidden flex items-center space-x-2">
+                <button id="pwa-install-btn-mob" onclick="installPWA()" class="p-2.5 bg-emerald-500 text-white rounded-xl border border-emerald-400 font-bold hidden" title="Install App">
+                    <i class="fa-solid fa-download"></i>
+                </button>
+                <button onclick="openGithubDeployModal()" class="p-2.5 text-white bg-white/10 rounded-xl border border-white/20" title="Panduan GitHub">
+                    <i class="fa-brands fa-github text-blue-300"></i>
+                </button>
+                <button onclick="toggleDarkMode()" class="p-2.5 text-white bg-white/10 rounded-xl border border-white/20">
+                    <i id="theme-icon-mob" class="fa-solid fa-moon text-yellow-300"></i>
+                </button>
+                <button onclick="openApiKeyModal()" class="p-2.5 text-white bg-white/10 rounded-xl border border-white/20">
+                    <i class="fa-solid fa-key text-yellow-300"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 grid grid-cols-1 lg:grid-cols-12 gap-8">
+        <section class="lg:col-span-5 space-y-6 no-print">
+            <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-6 card-hover">
+                <div class="flex items-center justify-between mb-5 pb-3 border-b border-slate-100 dark:border-slate-800">
+                    <h2 class="text-base font-bold text-slate-900 dark:text-slate-100 flex items-center">
+                        <i class="fa-solid fa-sliders text-brand-600 dark:text-blue-400 mr-2"></i> Parameter Modul Ajar
+                    </h2>
+                    <span class="text-xs font-semibold text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/50 px-2.5 py-1 rounded-lg border border-blue-200 dark:border-blue-900">Kurikulum Merdeka</span>
+                </div>
+
+                <form id="generator-form" onsubmit="handleGenerate(event)" class="space-y-4">
+                    
+                    <!-- Program Keahlian -->
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">Program Keahlian (Konsentrasi)</label>
+                        <select id="program-keahlian" required class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition">
+                            <option value="" disabled selected>-- Pilih Program Keahlian --</option>
+                            <option value="Teknik Pemesinan (TM)">1. Teknik Pemesinan (TM)</option>
+                            <option value="Teknik Kendaraan Ringan Otomotif (TKRO)">2. Teknik Kendaraan Ringan Otomotif (TKRO)</option>
+                            <option value="Teknik Elektronika Industri (TE)">3. Teknik Elektronika Industri (TE)</option>
+                            <option value="Teknik Jaringan Komputer dan Telekomunikasi (TJKT)">4. Teknik Jaringan Komputer dan Telekomunikasi (TJKT)</option>
+                            <option value="Broadcasting Perfilman (BP)">5. Broadcasting Perfilman (BP)</option>
+                        </select>
+                    </div>
+
+                    <!-- Mata Pelajaran -->
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">Mata Pelajaran</label>
+                        <input type="text" id="mata-pelajaran" required placeholder="Contoh: Dasar-Dasar Teknik Pemesinan, Pemrograman CNC, dll." class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition">
+                    </div>
+
+                    <!-- Fase / Kelas & Tahun Pelajaran -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">Fase / Kelas</label>
+                            <select id="fase-kelas" required class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition">
+                                <option value="Fase E / Kelas X">Fase E / Kelas X</option>
+                                <option value="Fase F / Kelas XI" selected>Fase F / Kelas XI</option>
+                                <option value="Fase F / Kelas XII">Fase F / Kelas XII</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">Tahun Pelajaran</label>
+                            <input type="text" id="tahun-pelajaran" required value="2026/2027" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition">
+                        </div>
+                    </div>
+
+                    <!-- Alokasi Waktu -->
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">Alokasi Waktu</label>
+                        <input type="text" id="alokasi-waktu" required value="4 Pertemuan (8 x 45 Menit)" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition">
+                    </div>
+
+                    <!-- Topik / Materi Pembelajaran -->
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">Topik / Elemen Pembelajaran</label>
+                        <input type="text" id="topik-materi" required placeholder="Contoh: Pengoperasian Mesin Bubut Konvensional & Green Workshop..." class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition">
+                    </div>
+
+                    <!-- Pendekatan Deep Learning -->
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">Fokus Pendekatan Deep Learning</label>
+                        <select id="deep-learning-focus" required class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition">
+                            <option value="Mindful Learning (Kesadaran Penuh & Penggalian Makna)">Mindful Learning (Kesadaran Penuh & Makna)</option>
+                            <option value="Meaningful Learning (Keterkaitan Kontekstual Dunia Nyata)" selected>Meaningful Learning (Kontekstual Dunia Nyata)</option>
+                            <option value="Joyful Learning (Pembelajaran Bermakna & Menyenangkan/Gamifikasi)">Joyful Learning (Interaktif & Gamifikasi)</option>
+                            <option value="Kombinasi Ketiganya (Mindful, Meaningful, Joyful)">Kombinasi Ketiganya (Berkesadaran, Bermakna, Menggembirakan)</option>
+                        </select>
+                        
+                        <!-- Penjelasan 3 Indikator Utama Deep Learning -->
+                        <div class="mt-2 p-3 bg-blue-50/80 dark:bg-slate-800/90 rounded-xl border border-blue-200 dark:border-slate-700 text-xs text-slate-700 dark:text-slate-300 space-y-1.5">
+                            <div class="font-bold text-brand-700 dark:text-blue-400 flex items-center">
+                                <i class="fa-solid fa-lightbulb mr-1.5 text-yellow-500"></i> Kerangka Utama Prinsip Dasar (3 Indikator Utama):
+                            </div>
+                            <ul class="list-disc pl-4 space-y-1 text-[11px] leading-relaxed">
+                                <li><strong>1. Berkesadaran:</strong> Murid terlibat secara penuh, sadar, dan aktif dalam proses berpikir mereka.</li>
+                                <li><strong>2. Bermakna:</strong> Pengetahuan dikaitkan langsung dengan konteks nyata dan relevan dengan kehidupan sehari-hari.</li>
+                                <li><strong>3. Menggembirakan:</strong> Suasana belajar diciptakan secara positif, interaktif, dan menyenangkan tanpa tekanan.</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Integrasi GBLHS & Panca Waluya -->
+                    <div class="bg-blue-50/70 dark:bg-slate-800/60 p-3.5 rounded-xl border border-blue-200 dark:border-slate-700 space-y-3">
+                        <label class="block text-xs font-bold text-blue-900 dark:text-blue-300 uppercase tracking-wider flex items-center">
+                            <i class="fa-solid fa-seedling mr-1.5 text-blue-600 dark:text-blue-400"></i> Integrasi GBLHS & Gapura Panca Waluya Jabar
+                        </label>
+                        <div class="bg-white dark:bg-slate-900 p-3 rounded-lg border border-blue-200 dark:border-slate-700 space-y-2">
+                            <label class="flex items-start space-x-2 cursor-pointer">
+                                <input type="checkbox" id="gblhs-enabled" checked class="rounded text-brand-600 focus:ring-brand-500 mt-0.5">
+                                <div>
+                                    <strong class="text-xs text-slate-900 dark:text-slate-100 block">GBLHS (Gerakan Peduli & Berbudaya Lingkungan Hidup di Sekolah)</strong>
+                                    <p class="text-[11px] text-slate-600 dark:text-slate-400 leading-normal">
+                                        Penerapan aksi nyata pelestarian lingkungan hidup (kebersihan, pengelolaan limbah praktik 3R, efisiensi energi/air, konservasi, dan budaya kerja industri hijau).
+                                    </p>
+                                </div>
+                            </label>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Pilih Nilai Gapura Panca Waluya:</label>
+                            <div class="grid grid-cols-1 gap-2 text-xs">
+                                <label class="flex items-start space-x-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 p-2 rounded-lg cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                                    <input type="checkbox" name="panca-waluya" value="Cageur: Sehat secara fisik, jasmani, rohani, dan mental serta lingkungan bersih" checked class="rounded text-brand-600 mt-0.5">
+                                    <div><strong class="text-slate-900 dark:text-slate-200">Cageur:</strong> <span class="text-slate-700 dark:text-slate-400">Sehat fisik/rohani & lingkungan bersih.</span></div>
+                                </label>
+                                <label class="flex items-start space-x-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 p-2 rounded-lg cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                                    <input type="checkbox" name="panca-waluya" value="Bageur: Berperilaku baik, berbudi pekerti luhur, santun, serta peduli terhadap sesama dan lingkungan" checked class="rounded text-brand-600 mt-0.5">
+                                    <div><strong class="text-slate-900 dark:text-slate-200">Bageur:</strong> <span class="text-slate-700 dark:text-slate-400">Berperilaku baik, santun, & peduli sesama/alam.</span></div>
+                                </label>
+                                <label class="flex items-start space-x-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 p-2 rounded-lg cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                                    <input type="checkbox" name="panca-waluya" value="Bener: Jujur, menjunjung tinggi kebenaran, berintegritas, dan bertanggung jawab" checked class="rounded text-brand-600 mt-0.5">
+                                    <div><strong class="text-slate-900 dark:text-slate-200">Bener:</strong> <span class="text-slate-700 dark:text-slate-400">Jujur, berintegritas, & bertanggung jawab.</span></div>
+                                </label>
+                                <label class="flex items-start space-x-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 p-2 rounded-lg cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                                    <input type="checkbox" name="panca-waluya" value="Pinter: Cerdas, kritis, berpengetahuan luas, serta memiliki wawasan yang baik" checked class="rounded text-brand-600 mt-0.5">
+                                    <div><strong class="text-slate-900 dark:text-slate-200">Pinter:</strong> <span class="text-slate-700 dark:text-slate-400">Cerdas, kritis, & berwawasan eco-literacy.</span></div>
+                                </label>
+                                <label class="flex items-start space-x-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 p-2 rounded-lg cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                                    <input type="checkbox" name="panca-waluya" value="Singer: Terampil, cekatan, gesit, kreatif, dan adaptif terhadap perubahan" checked class="rounded text-brand-600 mt-0.5">
+                                    <div><strong class="text-slate-900 dark:text-slate-200">Singer:</strong> <span class="text-slate-700 dark:text-slate-400">Terampil, kreatif, & adaptif terhadap perubahan.</span></div>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="space-y-3 pt-2 border-t border-slate-100 dark:border-slate-800">
+                        <h3 class="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider flex items-center">
+                            <i class="fa-solid fa-id-card text-brand-600 dark:text-blue-400 mr-1.5"></i> Identitas Penyusun & Pengesahan
+                        </h3>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Nama Guru Penyusun</label>
+                                <input type="text" id="nama-guru" required value="Tim Produktif SMK N 1 GS" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-brand-500 outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">NIP Guru Penyusun</label>
+                                <input type="text" id="nip-guru" required value="198203162023211005" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-brand-500 outline-none">
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Nama Kepala Sekolah</label>
+                                <input type="text" id="nama-kepsek" required value="Tumiyanta, M.Pd" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-brand-500 outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">NIP Kepala Sekolah</label>
+                                <input type="text" id="nip-kepsek" required value="196707041990031006" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-brand-500 outline-none">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Model Pembelajaran -->
+                    <div class="grid grid-cols-1 gap-3 pt-2">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">Model Pembelajaran</label>
+                            <select id="model-pembelajaran" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition">
+                                <option value="Project Based Learning (PjBL)">Project Based Learning (PjBL)</option>
+                                <option value="Problem Based Learning (PBL)">Problem Based Learning (PBL)</option>
+                                <option value="Inquiry / Discovery Learning">Inquiry / Discovery Learning</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- 8 Dimensi Profil Lulusan Pembelajaran Mendalam -->
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">8 Dimensi Profil Lulusan Pembelajaran Mendalam</label>
+                        <div class="grid grid-cols-2 gap-2 text-xs">
+                            <label class="flex items-center space-x-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-2 rounded-lg cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700">
+                                <input type="checkbox" name="dimensi-lulusan" value="Keimanan dan Ketakwaan" checked class="rounded text-brand-600 focus:ring-brand-500">
+                                <span class="text-slate-700 dark:text-slate-300 font-medium">1. Keimanan & Ketakwaan</span>
+                            </label>
+                            <label class="flex items-center space-x-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-2 rounded-lg cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700">
+                                <input type="checkbox" name="dimensi-lulusan" value="Kewargaan" checked class="rounded text-brand-600 focus:ring-brand-500">
+                                <span class="text-slate-700 dark:text-slate-300 font-medium">2. Kewargaan</span>
+                            </label>
+                            <label class="flex items-center space-x-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-2 rounded-lg cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700">
+                                <input type="checkbox" name="dimensi-lulusan" value="Penalaran Kritis" checked class="rounded text-brand-600 focus:ring-brand-500">
+                                <span class="text-slate-700 dark:text-slate-300 font-medium">3. Penalaran Kritis</span>
+                            </label>
+                            <label class="flex items-center space-x-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-2 rounded-lg cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700">
+                                <input type="checkbox" name="dimensi-lulusan" value="Kreativitas" checked class="rounded text-brand-600 focus:ring-brand-500">
+                                <span class="text-slate-700 dark:text-slate-300 font-medium">4. Kreativitas</span>
+                            </label>
+                            <label class="flex items-center space-x-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-2 rounded-lg cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700">
+                                <input type="checkbox" name="dimensi-lulusan" value="Kolaborasi" checked class="rounded text-brand-600 focus:ring-brand-500">
+                                <span class="text-slate-700 dark:text-slate-300 font-medium">5. Kolaborasi</span>
+                            </label>
+                            <label class="flex items-center space-x-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-2 rounded-lg cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700">
+                                <input type="checkbox" name="dimensi-lulusan" value="Kemandirian" checked class="rounded text-brand-600 focus:ring-brand-500">
+                                <span class="text-slate-700 dark:text-slate-300 font-medium">6. Kemandirian</span>
+                            </label>
+                            <label class="flex items-center space-x-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-2 rounded-lg cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700">
+                                <input type="checkbox" name="dimensi-lulusan" value="Kesehatan" checked class="rounded text-brand-600 focus:ring-brand-500">
+                                <span class="text-slate-700 dark:text-slate-300 font-medium">7. Kesehatan</span>
+                            </label>
+                            <label class="flex items-center space-x-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-2 rounded-lg cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700">
+                                <input type="checkbox" name="dimensi-lulusan" value="Komunikasi" checked class="rounded text-brand-600 focus:ring-brand-500">
+                                <span class="text-slate-700 dark:text-slate-300 font-medium">8. Komunikasi</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <button type="submit" id="generate-btn" class="w-full bg-brand-600 hover:bg-brand-700 text-white font-semibold py-3.5 px-4 rounded-xl shadow-lg shadow-brand-600/20 transition flex items-center justify-center space-x-2">
+                        <i class="fa-solid fa-wand-magic-sparkles text-blue-200"></i>
+                        <span>Generate Modul Ajar AI</span>
+                    </button>
+                </form>
+            </div>
+        </section>
+
+        <section class="lg:col-span-7 flex flex-col">
+            <div id="output-card" class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 flex-grow flex flex-col overflow-hidden">
+                <!-- Card Header with Actions -->
+                <div class="bg-slate-50 dark:bg-slate-800/80 px-6 py-4 border-b border-slate-200 dark:border-slate-700 flex flex-wrap items-center justify-between gap-3 no-print">
+                    <div class="flex items-center space-x-2">
+                        <span class="w-3 h-3 rounded-full bg-brand-500 inline-block animate-pulse"></span>
+                        <h3 class="font-bold text-sm text-slate-800 dark:text-slate-100">Hasil Dokumen Modul Ajar AI (Format Resmi Siap Cetak A4)</h3>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <button type="button" onclick="handleCopy()" id="copy-btn" disabled class="bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 px-3 py-1.5 rounded-lg text-xs font-semibold border border-slate-300 dark:border-slate-600 transition flex items-center space-x-1.5 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm">
+                            <i class="fa-solid fa-copy text-slate-500 dark:text-slate-400"></i>
+                            <span>Salin Teks</span>
+                        </button>
+                        <button type="button" onclick="handlePrint()" id="print-btn" disabled class="bg-brand-600 hover:bg-brand-700 text-white px-3.5 py-1.5 rounded-lg text-xs font-semibold transition flex items-center space-x-1.5 disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-brand-600/20">
+                            <i class="fa-solid fa-print"></i>
+                            <span>Cetak / Ekspor PDF</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="p-4 sm:p-8 overflow-y-auto max-h-[900px] bg-slate-200/60 dark:bg-slate-950 flex-grow transition-colors">
+                    <!-- Default Initial State -->
+                    <div id="empty-state" class="text-center py-24 px-4 font-sans bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800">
+                        <div class="w-16 h-16 bg-blue-50 dark:bg-slate-800 text-brand-600 dark:text-blue-400 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-blue-100 dark:border-slate-700 shadow-sm">
+                            <i class="fa-solid fa-file-lines text-2xl"></i>
+                        </div>
+                        <h3 class="text-base font-bold text-slate-800 dark:text-slate-200 mb-1">Belum Ada Modul Ajar yang Dibuat</h3>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto leading-relaxed">
+                            Silakan tentukan parameter program keahlian, mata pelajaran, dan integrasi GBLHS / Panca Waluya, lalu klik tombol <strong class="text-slate-700 dark:text-slate-300">"Generate Modul Ajar AI"</strong> di sebelah kiri.
+                        </p>
+                    </div>
+
+                    <!-- Loading State -->
+                    <div id="loading-state" class="hidden text-center py-24 px-4 font-sans bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800">
+                        <div class="inline-block animate-spin rounded-full h-12 w-12 border-4 border-brand-600 dark:border-blue-500 border-t-transparent mb-4"></div>
+                        <h3 class="text-base font-bold text-slate-800 dark:text-slate-200 mb-1">AI Sedang Menyusun Modul Ajar Resmi...</h3>
+                        <p id="loading-status-text" class="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto leading-relaxed">
+                            Mengintegrasikan kerangka Deep Learning (Berkesadaran, Bermakna, Menggembirakan), aksi nyata GBLHS (Adiwiyata), serta nilai Gapura Panca Waluya Jawa Barat...
+                        </p>
+                    </div>
+
+                    <!-- Visual Simulasi Lembar Kertas A4 -->
+                    <div id="result-wrapper" class="hidden a4-preview-container font-serif text-slate-900 dark:text-slate-100">
+                        <div id="printable-area" class="w-full">
+                            <!-- Kop Surat Resmi Instansi Pendidikan Jawa Barat & SMK Negeri 1 Gunung Sindur -->
+                            <div id="doc-header" class="pb-2 border-b-4 border-double border-black dark:border-white mb-6 font-serif">
+                                <div class="flex items-center justify-between gap-2">
+                                    <!-- Logo Jawa Barat (Kiri) -->
+                                    <div class="w-20 flex justify-start flex-shrink-0">
+                                        <img src="https://lh3.googleusercontent.com/d/1oeKkLp56wB82q671Qf4Dd2t5rJO3RTLC" alt="Logo Provinsi Jawa Barat" class="w-16 h-20 object-contain" onerror="this.src='https://placehold.co/100x120/1e3a8a/ffffff?text=JABAR'">
+                                    </div>
+                                    <!-- Teks Kop Surat Resmi -->
+                                    <div class="text-center flex-grow space-y-0.5">
+                                        <h4 class="text-[11pt] font-bold tracking-wide uppercase text-black dark:text-white leading-tight">PEMERINTAH PROVINSI JAWA BARAT</h4>
+                                        <h4 class="text-[11pt] font-bold tracking-wide uppercase text-black dark:text-white leading-tight">DINAS PENDIDIKAN</h4>
+                                        <h4 class="text-[10pt] font-bold tracking-wide uppercase text-black dark:text-white leading-tight">CABANG DINAS PENDIDIKAN WILAYAH I</h4>
+                                        <h2 class="text-[13pt] font-extrabold tracking-wider text-black dark:text-white uppercase font-serif my-0.5 leading-tight">SMK NEGERI 1 GUNUNG SINDUR</h2>
+                                        <p class="text-[9.5pt] text-black dark:text-slate-200 font-normal leading-tight">Jalan SMPN 3 Rawakalong, Desa Rawakalong, Kec. Gunung Sindur, Kab. Bogor 16340</p>
+                                        <p class="text-[9pt] text-black dark:text-slate-300 font-normal leading-tight">Laman: http://www.smkn1gunungsindur.sch.id | Pos-el: infosekolah@smkn1gunungsindur.sch.id</p>
+                                    </div>
+                                    <!-- Logo SMKN 1 Gunung Sindur (Kanan) -->
+                                    <div class="w-20 flex justify-end flex-shrink-0">
+                                        <img src="https://lh3.googleusercontent.com/d/18s27bJQ2ZE5lW__SUHjZV3VH0Yjk2ri0" alt="Logo SMK Negeri 1 Gunung Sindur" class="w-16 h-20 object-contain" onerror="this.src='https://placehold.co/100x120/1e3a8a/ffffff?text=SMKN1GS'">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Content Result State -->
+                            <div id="result-content" class="modul-content space-y-2">
+                                <!-- Dynamic Content injected via JS -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Modal Gemini API Key -->
+    <div id="apiKeyModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white dark:bg-slate-900 rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-200 dark:border-slate-800 font-sans">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="font-bold text-base text-slate-900 dark:text-slate-100 flex items-center">
+                    <i class="fa-solid fa-key text-yellow-500 mr-2"></i> Konfigurasi Gemini API Key
+                </h3>
+                <button type="button" onclick="closeApiKeyModal()" class="text-slate-400 hover:text-slate-600 p-1">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mb-4 leading-relaxed">
+                Aplikasi ini menggunakan model <code class="bg-slate-100 dark:bg-slate-800 text-brand-700 dark:text-blue-400 px-1.5 py-0.5 rounded font-mono">gemini-3-flash-preview</code> untuk menghasilkan Modul Ajar Deep Learning, GBLHS & Gapura Panca Waluya Jabar. Masukkan API Key Anda di bawah ini (atau biarkan kosong jika menggunakan kunci sistem bawaan).
+            </p>
+            <div class="mb-5">
+                <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">API Key</label>
+                <input type="password" id="custom-api-key" placeholder="AIzaSy..." class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-brand-500 outline-none font-mono">
+            </div>
+            <div class="flex justify-end space-x-3">
+                <button type="button" onclick="closeApiKeyModal()" class="px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-semibold transition">Batal</button>
+                <button type="button" onclick="saveApiKey()" class="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-semibold transition shadow-sm">Simpan Kunci</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Panduan GitHub Deploy & Install Desktop -->
+    <div id="githubDeployModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white dark:bg-slate-900 rounded-2xl max-w-2xl w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-800 font-sans max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-100 dark:border-slate-800">
+                <h3 class="font-bold text-base text-slate-900 dark:text-slate-100 flex items-center">
+                    <i class="fa-brands fa-github text-brand-600 dark:text-blue-400 mr-2 text-xl"></i> Panduan Upload ke GitHub & Install di Laptop
+                </h3>
+                <button type="button" onclick="closeGithubDeployModal()" class="text-slate-400 hover:text-slate-600 p-1">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            
+            <div class="space-y-4 text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                <div class="p-3 bg-blue-50 dark:bg-slate-800/80 rounded-xl border border-blue-200 dark:border-slate-700">
+                    <strong class="text-brand-700 dark:text-blue-300 block mb-1 font-semibold">
+                        <i class="fa-solid fa-laptop text-emerald-500 mr-1"></i> Cara Install Aplikasi di Laptop/PC:
+                    </strong>
+                    <ol class="list-decimal pl-4 space-y-1 text-slate-700 dark:text-slate-300">
+                        <li>Buka aplikasi ini yang sudah di-deploy di GitHub Pages menggunakan Google Chrome, Microsoft Edge, atau Brave di Laptop.</li>
+                        <li>Klik tombol hijau <span class="bg-emerald-500 text-white px-1.5 py-0.5 rounded font-bold">Install di Laptop</span> di pojok kanan atas navbar.</li>
+                        <li>Atau klik ikon install PWA <i class="fa-solid fa-desktop text-blue-500"></i> yang muncul di bilah alamat (*address bar*) browser Anda.</li>
+                        <li>Aplikasi akan terpasang sebagai aplikasi desktop mandiri (*Progressive Web App*) tanpa memerlukan instalasi software tambahan!</li>
+                    </ol>
+                </div>
+
+                <div class="space-y-2">
+                    <h4 class="font-bold text-slate-900 dark:text-slate-100 text-sm">Langkah Upload ke GitHub Pages (Gratis):</h4>
+                    <ol class="list-decimal pl-5 space-y-2">
+                        <li>Buat repositori baru di GitHub (misal: <code class="bg-slate-100 dark:bg-slate-800 px-1 py-0.5 rounded font-mono">modul-ajar-smkn1gs</code>) dan atur ke **Public**.</li>
+                        <li>Simpan kode aplikasi ini sebagai file bernama <code class="bg-slate-100 dark:bg-slate-800 px-1 py-0.5 rounded font-mono text-brand-600 dark:text-blue-400 font-bold">index.html</code>.</li>
+                        <li>Unggah (*Upload*) file <code class="bg-slate-100 dark:bg-slate-800 px-1 py-0.5 rounded font-mono">index.html</code> tersebut ke dalam repositori GitHub Anda.</li>
+                        <li>Buka menu **Settings** -> **Pages** pada repositori GitHub tersebut.</li>
+                        <li>Pada bagian **Build and deployment -> Branch**, pilih <code class="bg-slate-100 dark:bg-slate-800 px-1 py-0.5 rounded font-mono">main</code> (atau <code class="bg-slate-100 dark:bg-slate-800 px-1 py-0.5 rounded font-mono">master</code>) dan folder <code class="bg-slate-100 dark:bg-slate-800 px-1 py-0.5 rounded font-mono">/ (root)</code>, lalu klik **Save**.</li>
+                        <li>Tunggu 1-2 menit. Tautan HTTPS aktif Anda akan muncul (contoh: <code class="bg-slate-100 dark:bg-slate-800 text-emerald-600 dark:text-emerald-400 px-1 py-0.5 rounded font-mono">https://username.github.io/modul-ajar-smkn1gs/</code>).</li>
+                    </ol>
+                </div>
+            </div>
+
+            <div class="mt-6 flex justify-end">
+                <button type="button" onclick="closeGithubDeployModal()" class="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-semibold transition">Saya Mengerti</button>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-slate-900 text-slate-400 py-6 border-t border-slate-800 text-xs no-print font-sans">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div class="flex items-center space-x-2">
+                <span class="font-bold text-slate-200">SMK Negeri 1 Gunung Sindur</span>
+                <span>&bull;</span>
+                <span>Kabupaten Bogor, Jawa Barat</span>
+            </div>
+            <div class="text-center sm:text-right">
+                <p>PWA App Ready &bull; Kurikulum Merdeka, Deep Learning, GBLHS & Gapura Panca Waluya Jabar</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Inline PWA Manifest Builder
+        function initPWAManifest() {
+            try {
+                const manifestObj = {
+                    "name": "AI Modul Ajar Generator Pro - SMKN 1 Gunung Sindur",
+                    "short_name": "ModulAjarAI",
+                    "description": "Generator Modul Ajar Kurikulum Merdeka, Deep Learning, GBLHS & Gapura Panca Waluya Jabar",
+                    "start_url": "./",
+                    "display": "standalone",
+                    "background_color": "#0f172a",
+                    "theme_color": "#172554",
+                    "icons": [
+                        {
+                            "src": "https://lh3.googleusercontent.com/d/18s27bJQ2ZE5lW__SUHjZV3VH0Yjk2ri0",
+                            "sizes": "192x192",
+                            "type": "image/png"
+                        },
+                        {
+                            "src": "https://lh3.googleusercontent.com/d/18s27bJQ2ZE5lW__SUHjZV3VH0Yjk2ri0",
+                            "sizes": "512x512",
+                            "type": "image/png"
+                        }
+                    ]
+                };
+                const manifestBlob = new Blob([JSON.stringify(manifestObj)], {type: 'application/json'});
+                const manifestURL = URL.createObjectURL(manifestBlob);
+                const manifestLink = document.getElementById('pwa-manifest');
+                if (manifestLink) manifestLink.setAttribute('href', manifestURL);
+            } catch (e) {
+                console.log('Manifest init:', e);
+            }
+        }
+
+        // Service Worker Registration for PWA desktop installation support
+        function initServiceWorker() {
+            if ('serviceWorker' in navigator) {
+                const swCode = `
+                    const CACHE_NAME = 'modul-ajar-ai-v1';
+                    self.addEventListener('install', (e) => {
+                        self.skipWaiting();
+                    });
+                    self.addEventListener('activate', (e) => {
+                        e.waitUntil(clients.claim());
+                    });
+                    self.addEventListener('fetch', (e) => {
+                        e.respondWith(
+                            fetch(e.request).catch(() => caches.match(e.request))
+                        );
+                    });
+                `;
+                try {
+                    const swBlob = new Blob([swCode], {type: 'application/javascript'});
+                    const swURL = URL.createObjectURL(swBlob);
+                    navigator.serviceWorker.register(swURL).catch(err => console.log('SW Registration info:', err));
+                } catch (e) {
+                    console.log('SW Blob fallback info:', e);
+                }
+            }
+        }
+
+        // Install PWA Prompt Interceptor
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            const installBtn = document.getElementById('pwa-install-btn');
+            const installBtnMob = document.getElementById('pwa-install-btn-mob');
+            if (installBtn) installBtn.classList.remove('hidden');
+            if (installBtnMob) installBtnMob.classList.remove('hidden');
+        });
+
+        function installPWA() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        alertMessage('Aplikasi berhasil dipasang di laptop/perangkat Anda!');
+                    }
+                    deferredPrompt = null;
+                });
+            } else {
+                alertMessage('Aplikasi siap di-install! Gunakan browser Chrome / Edge lalu klik ikon tiga titik -> Save and Share -> Install Page as App.');
+            }
+        }
+
+        async function fetchWithRetry(url, options, retries = 3, delay = 1000) {
+            try {
+                const response = await fetch(url, options);
+                if (!response.ok) {
+                    throw new Error('HTTP error! status: ' + response.status);
+                }
+                return response;
+            } catch (error) {
+                if (retries > 0) {
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                    return fetchWithRetry(url, options, retries - 1, delay * 2);
+                }
+                throw error;
+            }
+        }
+
+        async function handleGenerate(event) {
+            event.preventDefault();
+
+            const programKeahlian = document.getElementById('program-keahlian').value;
+            const mataPelajaran = document.getElementById('mata-pelajaran').value;
+            const faseKelas = document.getElementById('fase-kelas').value;
+            const tahunPelajaran = document.getElementById('tahun-pelajaran').value;
+            const alokasiWaktu = document.getElementById('alokasi-waktu').value;
+            const topikMateri = document.getElementById('topik-materi').value;
+            const deepLearningFocus = document.getElementById('deep-learning-focus').value;
+            const gblhsEnabled = document.getElementById('gblhs-enabled').checked;
+            const namaGuru = document.getElementById('nama-guru').value;
+            const nipGuru = document.getElementById('nip-guru').value;
+            const namaKepsek = document.getElementById('nama-kepsek').value;
+            const nipKepsek = document.getElementById('nip-kepsek').value;
+            const modelPembelajaran = document.getElementById('model-pembelajaran').value;
+
+            const dimensiCheckboxes = document.querySelectorAll('input[name="dimensi-lulusan"]:checked');
+            const dimensiList = Array.from(dimensiCheckboxes).map(cb => cb.value).join(', ');
+
+            const pancaWaluyaCheckboxes = document.querySelectorAll('input[name="panca-waluya"]:checked');
+            const pancaWaluyaList = Array.from(pancaWaluyaCheckboxes).map(cb => cb.value).join('; ');
+
+            document.getElementById('empty-state').classList.add('hidden');
+            document.getElementById('result-wrapper').classList.add('hidden');
+            document.getElementById('loading-state').classList.remove('hidden');
+            document.getElementById('copy-btn').disabled = true;
+            document.getElementById('print-btn').disabled = true;
+
+            const loadingTexts = [
+                "Menyelaraskan Capaian Pembelajaran Kurikulum Merdeka...",
+                "Menyusun Kerangka Utama Prinsip Dasar Deep Learning (Berkesadaran, Bermakna, Menggembirakan)...",
+                "Merancang Skenario Praktik GBLHS (Adiwiyata & Vokasi Hijau)...",
+                "Mengintegrasikan 8 Dimensi Profil Lulusan & Gapura Panca Waluya...",
+                "Menyusun Asesmen HOTS dan Lembar Pengesahan Resmi..."
+            ];
+            let textIdx = 0;
+            const interval = setInterval(() => {
+                textIdx = (textIdx + 1) % loadingTexts.length;
+                const statusEl = document.getElementById('loading-status-text');
+                if (statusEl) statusEl.innerText = loadingTexts[textIdx];
+            }, 1200);
+
+            const systemPrompt = "Anda adalah Pakar Kurikulum SMK dan Guru Senior yang merancang Modul Ajar Kurikulum Merdeka berbasis Pembelajaran Mendalam (Deep Learning), 8 Dimensi Profil Lulusan (Keimanan dan Ketakwaan, Kewargaan, Penalaran Kritis, Kreativitas, Kolaborasi, Kemandirian, Kesehatan, Komunikasi), GBLHS (Gerakan Peduli dan Berbudaya Lingkungan Hidup di Sekolah / Adiwiyata), serta kearifan lokal Gapura Panca Waluya Jawa Barat (Cageur, Bageur, Bener, Pinter, Singer).\n\n" +
+                "SYARAT WAJIB & MUTLAK HASIL DOKUMEN MODUL AJAR:\n" +
+                "Wajib memasukkan Karakteristik dan Kerangka Utama 'Prinsip Dasar (3 Indikator Utama Deep Learning)' secara eksplisit dan rinci pada Informasi Umum dan Sintaks Kegiatan Pembelajaran:\n" +
+                "1. Berkesadaran: Murid terlibat secara penuh, sadar, dan aktif dalam proses berpikir mereka.\n" +
+                "2. Bermakna: Pengetahuan dikaitkan langsung dengan konteks nyata dan relevan dengan kehidupan sehari-hari.\n" +
+                "3. Menggembirakan: Suasana belajar diciptakan secara positif, interaktif, dan menyenangkan tanpa tekanan.\n\n" +
+                "GBLHS wajib dijabarkan secara jelas sebagai pembiasaan sadar lingkungan, pengelolaan limbah bengkel/praktek (3R), efisiensi energi/air, dan budaya kerja industri hijau (Green Skills) yang terintegrasi penuh ke dalam kegiatan pembelajaran produktif maupun adaptif.\n\n" +
+                "ATURAN MUTLAK BAHASA: Gunakan kata 'Murid' untuk menyebut anak didik. JANGAN PERNAH menggunakan kata 'Siswa' atau kata 'Peserta Didik' di dalam seluruh teks hasil modul ajar.";
+
+            const userQuery = "Buatkan Dokumen Modul Ajar Kurikulum Merdeka yang lengkap, mendalam, dan profesional dengan format HTML bersih (menggunakan tag h2, h3, p, ul, li, table, dll tanpa menyertakan tag markdown) untuk data berikut:\n" +
+                "- Nama Sekolah: SMK Negeri 1 Gunung Sindur\n" +
+                "- Alamat Sekolah: Jalan SMPN 3 Rawakalong, Desa Rawakalong, Kec. Gunung Sindur, Kab. Bogor 16340\n" +
+                "- Kontak Sekolah: Laman: http://www.smkn1gunungsindur.sch.id | Pos-el: infosekolah@smkn1gunungsindur.sch.id\n" +
+                "- Program Keahlian: " + programKeahlian + "\n" +
+                "- Mata Pelajaran: " + mataPelajaran + "\n" +
+                "- Fase / Kelas: " + faseKelas + "\n" +
+                "- Tahun Pelajaran: " + tahunPelajaran + "\n" +
+                "- Topik / Materi: " + topikMateri + "\n" +
+                "- Alokasi Waktu: " + alokasiWaktu + "\n" +
+                "- Pendekatan Deep Learning: " + deepLearningFocus + "\n" +
+                "- Integrasi GBLHS (Gerakan Peduli dan Berbudaya Lingkungan Hidup di Sekolah): " + (gblhsEnabled ? 'AKTIF (Sertakan sub-bagian khusus makna, fungsi, dan aksi nyata GBLHS seperti praktik 3R limbah keahlian, efisiensi energi, pencegahan polusi, serta eco-literacy di lingkungan SMK Negeri 1 Gunung Sindur)' : 'Standar') + "\n" +
+                "- Nilai Gapura Panca Waluya Jawa Barat: " + pancaWaluyaList + "\n" +
+                "- Model Pembelajaran: " + modelPembelajaran + "\n" +
+                "- 8 Dimensi Profil Lulusan Pembelajaran Mendalam: " + dimensiList + "\n" +
+                "- Guru Penyusun: " + namaGuru + " (NIP: " + nipGuru + ")\n" +
+                "- Kepala Sekolah: " + namaKepsek + " (NIP: " + nipKepsek + ")\n\n" +
+                "Struktur Dokumen Modul Ajar yang wajib disusun secara komprehensif:\n" +
+                "1. INFORMASI UMUM (Identitas Sekolah, Identitas Penyusun, Kepala Sekolah, Mata Pelajaran, Tahun Pelajaran " + tahunPelajaran + ", Kompetensi Awal, Karakteristik & Kerangka Utama: Prinsip Dasar (3 Indikator Utama Deep Learning) [1. Berkesadaran: Murid terlibat secara penuh, sadar, dan aktif dalam proses berpikir mereka; 2. Bermakna: Pengetahuan dikaitkan langsung dengan konteks nyata dan relevan dengan kehidupan sehari-hari; 3. Menggembirakan: Suasana belajar diciptakan secara positif, interaktif, dan menyenangkan tanpa tekanan], 8 Dimensi Profil Lulusan Pembelajaran Mendalam, Penjelasan Integrasi GBLHS [Makna, Fungsi, & Relevansi dengan Adiwiyata & Vokasi Hijau], Integrasi Gapura Panca Waluya Jabar, Sarana Prasarana, Target Murid, Model Pembelajaran)\n" +
+                "2. KOMPONEN INTI\n" +
+                "   - Tujuan Pembelajaran (TP) & Alur Tujuan Pembelajaran (ATP)\n" +
+                "   - Pemahaman Bermakna & Pertanyaan Pemantik (berbasis HOTS & Kesadaran Lingkungan)\n" +
+                "   - Persiapan Pembelajaran\n" +
+                "   - Kegiatan Pembelajaran (Pendahuluan, Inti dengan penerapan langsung sintaks Deep Learning [Berkesadaran, Bermakna, Menggembirakan] + Skenario Aksi Nyata GBLHS dalam praktik kejuruan, Penutup)\n" +
+                "   - Asesmen (Asesmen Diagnostik, Formatif, Sumatif berbasis HOTS & rubrik peduli lingkungan)\n" +
+                "   - Pengayaan dan Remedial\n" +
+                "3. LAMPIRAN\n" +
+                "   - Lembar Kerja Murid (LKM) & Proyek Peduli Lingkungan / GBLHS\n" +
+                "   - Bahan Bacaan Guru & Murid (Koneksi DUDI, Standar K3LH, & Nilai Panca Waluya)\n" +
+                "   - Glosarium & Daftar Pustaka\n" +
+                "4. LEMBAR PENGESAHAN (Tuliskan tanda tangan persetujuan resmi di akhir dokumen dengan mencantumkan nama dan NIP Guru Penyusun serta Kepala Sekolah SMK Negeri 1 Gunung Sindur: " + namaGuru + " / NIP. " + nipGuru + " dan Kepala Sekolah " + namaKepsek + " / NIP. " + nipKepsek + ").\n\n" +
+                "ATURAN KETAT: PADA SELURUH BAGIAN HASIL MODUL AJAR DI ATAS, GUNAKAN HANYA KATA \"Murid\" UNTUK MENYEBUT ANAK DIDIK. DILARANG KERAS MENGGUNAKAN KATA \"Siswa\" ATAU \"Peserta Didik\".";
+
+            const userApiKey = getApiKey();
+            const apiKey = userApiKey !== '' ? userApiKey : '';
+            const apiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=' + apiKey;
+
+            const payload = {
+                contents: [{ parts: [{ text: userQuery }] }],
+                systemInstruction: { parts: [{ text: systemPrompt }] }
+            };
+
+            try {
+                let response = await fetchWithRetry(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                clearInterval(interval);
+                const result = await response.json();
+                const candidate = result.candidates?.[0];
+
+                if (candidate && candidate.content?.parts?.[0]?.text) {
+                    let htmlOutput = candidate.content.parts[0].text;
+                    htmlOutput = htmlOutput.replace(/^```[a-z]*\n?/gm, '').replace(/```$/gm, '').trim();
+
+                    document.getElementById('loading-state').classList.add('hidden');
+                    document.getElementById('result-wrapper').classList.remove('hidden');
+                    document.getElementById('result-content').innerHTML = htmlOutput;
+                    document.getElementById('copy-btn').disabled = false;
+                    document.getElementById('print-btn').disabled = false;
+                    
+                    alertMessage('Modul Ajar Berhasil Dibuat!');
+                } else {
+                    throw new Error('Respons AI tidak valid atau kosong.');
+                }
+            } catch (err) {
+                clearInterval(interval);
+                console.error(err);
+                document.getElementById('loading-state').classList.add('hidden');
+                document.getElementById('empty-state').classList.remove('hidden');
+                alertMessage('Gagal menghasilkan Modul Ajar: ' + err.message);
+            }
+        }
+
+        function handleCopy() {
+            try {
+                const content = document.getElementById('printable-area').innerText;
+                const tempTextArea = document.createElement('textarea');
+                tempTextArea.value = content;
+                document.body.appendChild(tempTextArea);
+                tempTextArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(tempTextArea);
+                alertMessage('Teks Modul Ajar berhasil disalin ke clipboard!');
+            } catch (e) {
+                alertMessage('Gagal menyalin teks.');
+            }
+        }
+
+        function handlePrint() {
+            try {
+                const printableArea = document.getElementById('printable-area');
+                const resultWrapper = document.getElementById('result-wrapper');
+                
+                if (!printableArea || !resultWrapper || resultWrapper.classList.contains('hidden')) {
+                    alertMessage('Belum ada modul ajar yang dapat dicetak.');
+                    return;
+                }
+
+                const printContent = printableArea.innerHTML;
+                const printWindow = window.open('', '_blank', 'width=950,height=700');
+                
+                if (!printWindow) {
+                    alertMessage('Peramban memblokir pop-up cetak. Mengaktifkan dialog cetak langsung...');
+                    window.focus();
+                    setTimeout(() => {
+                        window.print();
+                    }, 300);
+                    return;
+                }
+
+                printWindow.document.open();
+                printWindow.document.write('<!DOCTYPE html><html lang="id"><head><meta charset="UTF-8"><title>Cetak Modul Ajar - SMK Negeri 1 Gunung Sindur</title><script src="https://cdn.tailwindcss.com"><\/script><style>@page { size: A4 portrait; margin: 1.5cm 1.5cm 1.5cm 1.5cm; } body { font-family: "Times New Roman", Times, Georgia, serif; color: #000000; background: white; padding: 0; margin: 0; font-size: 11pt; line-height: 1.0; } h2 { font-size: 12pt; font-weight: bold; color: #000000; margin-top: 1.1rem; margin-bottom: 0.35rem; border-bottom: 1.5px solid #000000; padding-bottom: 0.15rem; text-transform: uppercase; text-align: left; break-after: avoid; } h3 { font-size: 11pt; font-weight: bold; color: #000000; margin-top: 0.85rem; margin-bottom: 0.25rem; text-align: left; break-after: avoid; } p, li { font-size: 11pt; line-height: 1.0; text-align: justify; text-justify: inter-word; margin-bottom: 0.35rem; color: #000000; } ul { list-style-type: disc; padding-left: 1.3rem; margin-bottom: 0.35rem; } ol { list-style-type: decimal; padding-left: 1.3rem; margin-bottom: 0.35rem; } table { width: 100%; border-collapse: collapse; margin-top: 0.5rem; margin-bottom: 0.5rem; font-size: 10pt; line-height: 1.0; break-inside: avoid; } th, td { border: 1px solid #000000; padding: 0.35rem 0.5rem; text-align: justify; text-justify: inter-word; vertical-align: top; } th { background-color: #f1f5f9; font-weight: bold; color: #000000; text-align: center; } blockquote { border-left: 3px solid #000000; padding-left: 0.75rem; margin: 0.4rem 0; font-style: italic; background-color: #f8fafc; } tr, blockquote, table { break-inside: avoid; }<\/style></head><body>' + printContent + '<script>window.onload = function() { setTimeout(function() { window.focus(); window.print(); window.close(); }, 600); };<\/script></body></html>');
+                printWindow.document.close();
+                alertMessage('Menyiapkan jendela cetak dokumen A4...');
+            } catch (e) {
+                console.error(e);
+                alertMessage('Gagal membuka dialog cetak. Silakan coba lagi.');
+            }
+        }
+
+        window.onload = function() {
+            initTheme();
+            initPWAManifest();
+            initServiceWorker();
+        };
+    </script>
+</body>
+</html>
