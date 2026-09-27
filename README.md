@@ -17,31 +17,6 @@ Platform AI Generator Modul Ajar Kurikulum Merdeka berbasis **Pembelajaran Menda
 
 ---
 
-## 🛠️ Langkah Upload & Deploy di GitHub Pages (100% Gratis)
-
-### Langkah 1: Buat Repositori GitHub Baru
-1. Masuk ke akun [GitHub](https://github.com/).
-2. Klik tombol **New** (atau tanda `+` di pojok kanan atas) untuk membuat repositori baru.
-3. Beri nama repositori, contoh: `modul-ajar-smkn1gs`.
-4. Pilih opsi **Public**.
-5. Klik **Create repository**.
-
-### Langkah 2: Unggah File Aplikasi
-1. Di halaman repositori baru Anda, klik tombol **uploading an existing file**.
-2. Unggah file **`index.html`** yang ada di folder ini.
-3. Klik tombol hijau **Commit changes**.
-
-### Langkah 3: Aktifkan GitHub Pages
-1. Masuk ke menu **Settings** pada repositori GitHub Anda.
-2. Pada navigasi sebelah kiri, klik **Pages**.
-3. Pada opsi **Build and deployment -> Branch**:
-   - Ubah `None` menjadi **`main`** (atau `master`).
-   - Folder biarkan tetap **`/ (root)`**.
-4. Klik tombol **Save**.
-5. Tunggu 1-2 menit. GitHub Pages akan memunculkan URL resmi HTTPS Anda (contoh: `https://syaifulamri1625.github.io/modulajar_deeplearning_smkn1gs/`).
-
----
-
 ## 💻 Cara Install Aplikasi di Laptop/PC (Windows / Mac)
 
 Setelah aplikasi di-deploy dan dibuka dari URL GitHub Pages HTTPS Anda:
